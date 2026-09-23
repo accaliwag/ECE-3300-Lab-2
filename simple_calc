@@ -1,0 +1,78 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 09/10/2026 12:51:05 PM
+// Design Name: 
+// Module Name: simple_calc
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module simple_calc( 
+    input [3:0] x, 
+    input [3:0] y, 
+    input [1:0] op_sel, 
+ 
+    output [11:0] result,
+    output negative,
+    output carry_out, 
+    output overflow 
+); 
+ 
+    wire [3:0] sum; 
+    wire [7:0] product; 
+    wire [7:0] sum_extended;
+
+    wire [7:0] binary_result;
+    wire [7:0] magnitude;
+ 
+ 
+    // Adder / Subtractor 
+    adder_subtractor adder_sub ( 
+        .x(x), 
+        .y(y), 
+        .add_n(op_sel[0]), 
+        .s(sum), 
+        .c_out(carry_out), 
+        .overflow(overflow) 
+    ); 
+ 
+ 
+    // Multiplier 
+    csa_multiplier multiplier ( 
+        .m(x), 
+        .q(y), 
+        .p(product) 
+    ); 
+ 
+    assign sum_extended = {4'b0000, sum}; 
+ 
+    mux_2x1_8bit mux ( 
+        .a(sum_extended), 
+        .b(product), 
+        .sel(op_sel[1]), 
+        .y(binary_result) 
+    );
+
+    assign negative = (op_sel == 2'b01) && sum[3];
+
+    assign magnitude = negative ? {4'b0000, (~sum + 1'b1)} : binary_result;
+
+    bin2bcd converter (
+        .bin(magnitude),
+        .bcd(result)
+    );
+ 
+endmodule
